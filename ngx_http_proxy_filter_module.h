@@ -23,8 +23,7 @@ typedef enum {
     NGX_HTTP_PROXY_REQUEST_FILTER,
     NGX_HTTP_PROXY_HEADER_FILTER,
     NGX_HTTP_PROXY_BODY_FILTER,
-    NGX_HTTP_PROXY_FINALIZE_REQUEST_FILTER,
-    NGX_HTTP_PROXY_FILTER_PHASES
+    NGX_HTTP_PROXY_FINALIZE_REQUEST_FILTER
 } ngx_http_proxy_filter_phase_e;
 
 
@@ -45,7 +44,8 @@ typedef struct {
 /*
  * Handlers follow nginx phase semantics: NGX_DECLINED advances to the next
  * handler in the same proxy phase, NGX_OK finishes the current proxy phase,
- * and other return values are propagated to the proxy hook caller.
+ * and other return values are propagated to the proxy hook caller. A proxy
+ * phase with no handler or only declined handlers completes with NGX_OK.
  */
 typedef ngx_int_t (*ngx_http_proxy_filter_pt)(ngx_http_request_t *r,
     ngx_http_proxy_filter_ctx_t *ctx);

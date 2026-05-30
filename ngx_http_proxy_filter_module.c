@@ -11,7 +11,7 @@
 
 
 typedef struct {
-    ngx_array_t                      phases[NGX_HTTP_PROXY_FILTER_PHASES];
+    ngx_array_t                      phases[NGX_HTTP_PROXY_FINALIZE_REQUEST_FILTER + 1];
 } ngx_http_proxy_filter_main_conf_t;
 
 
@@ -21,7 +21,7 @@ typedef struct {
 
 
 static void *ngx_http_proxy_filter_create_main_conf(ngx_conf_t *cf);
-static ngx_int_t ngx_http_proxy_filter_call_phase(ngx_http_request_t *r,
+static ngx_int_t ngx_http_proxy_filter_run_phase(ngx_http_request_t *r,
     ngx_uint_t phase, ngx_http_proxy_filter_ctx_t *ctx, ngx_uint_t *ran);
 static ngx_int_t ngx_http_proxy_filter_refresh_headers(ngx_http_request_t *r);
 static ngx_int_t ngx_http_proxy_filter_has_shadow(ngx_chain_t *cl,
@@ -70,7 +70,7 @@ ngx_http_proxy_filter_create_main_conf(ngx_conf_t *cf)
         return NULL;
     }
 
-    for (i = 0; i < NGX_HTTP_PROXY_FILTER_PHASES; i++) {
+    for (i = 0; i <= NGX_HTTP_PROXY_FINALIZE_REQUEST_FILTER; i++) {
         if (ngx_array_init(&conf->phases[i], cf->pool, 1,
                            sizeof(ngx_http_proxy_filter_pt))
             != NGX_OK)
@@ -90,7 +90,7 @@ ngx_http_proxy_filter_register(ngx_conf_t *cf, ngx_uint_t phase,
     ngx_http_proxy_filter_pt          *h;
     ngx_http_proxy_filter_main_conf_t *pmcf;
 
-    if (phase >= NGX_HTTP_PROXY_FILTER_PHASES || handler == NULL) {
+    if (phase > NGX_HTTP_PROXY_FINALIZE_REQUEST_FILTER || handler == NULL) {
         return NGX_ERROR;
     }
 
@@ -112,7 +112,7 @@ ngx_http_proxy_filter_register(ngx_conf_t *cf, ngx_uint_t phase,
 
 
 static ngx_int_t
-ngx_http_proxy_filter_call_phase(ngx_http_request_t *r, ngx_uint_t phase,
+ngx_http_proxy_filter_run_phase(ngx_http_request_t *r, ngx_uint_t phase,
     ngx_http_proxy_filter_ctx_t *ctx, ngx_uint_t *ran)
 {
     ngx_uint_t                         i;
@@ -124,13 +124,13 @@ ngx_http_proxy_filter_call_phase(ngx_http_request_t *r, ngx_uint_t phase,
         *ran = 0;
     }
 
-    if (phase >= NGX_HTTP_PROXY_FILTER_PHASES) {
+    if (phase > NGX_HTTP_PROXY_FINALIZE_REQUEST_FILTER) {
         return NGX_ERROR;
     }
 
     pmcf = ngx_http_get_module_main_conf(r, ngx_http_proxy_filter_module);
     if (pmcf == NULL || pmcf->phases[phase].nelts == 0) {
-        return NGX_DECLINED;
+        return NGX_OK;
     }
 
     if (ran) {
@@ -155,7 +155,7 @@ ngx_http_proxy_filter_call_phase(ngx_http_request_t *r, ngx_uint_t phase,
         return rc;
     }
 
-    return NGX_DECLINED;
+    return NGX_OK;
 }
 
 
@@ -167,10 +167,10 @@ ngx_http_proxy_filter_access_hook(ngx_http_request_t *r)
 
     ngx_memzero(&ctx, sizeof(ngx_http_proxy_filter_ctx_t));
 
-    rc = ngx_http_proxy_filter_call_phase(r, NGX_HTTP_PROXY_ACCESS_FILTER,
-                                         &ctx, NULL);
+    rc = ngx_http_proxy_filter_run_phase(r, NGX_HTTP_PROXY_ACCESS_FILTER,
+                                        &ctx, NULL);
 
-    return (rc == NGX_DECLINED) ? NGX_OK : rc;
+    return rc;
 }
 
 
@@ -183,10 +183,10 @@ ngx_http_proxy_filter_request_hook(ngx_http_request_t *r, ngx_list_t *headers)
     ngx_memzero(&ctx, sizeof(ngx_http_proxy_filter_ctx_t));
     ctx.headers = headers;
 
-    rc = ngx_http_proxy_filter_call_phase(r, NGX_HTTP_PROXY_REQUEST_FILTER,
-                                         &ctx, NULL);
+    rc = ngx_http_proxy_filter_run_phase(r, NGX_HTTP_PROXY_REQUEST_FILTER,
+                                        &ctx, NULL);
 
-    if (rc == NGX_OK || rc == NGX_DECLINED) {
+    if (rc == NGX_OK) {
         return NGX_OK;
     }
 
@@ -217,10 +217,10 @@ ngx_http_proxy_filter_header_hook(ngx_http_request_t *r)
     ctx.headers = &u->headers_in.headers;
     ctx.headers_in = &u->headers_in;
 
-    rc = ngx_http_proxy_filter_call_phase(r, NGX_HTTP_PROXY_HEADER_FILTER,
-                                         &ctx, NULL);
+    rc = ngx_http_proxy_filter_run_phase(r, NGX_HTTP_PROXY_HEADER_FILTER,
+                                        &ctx, NULL);
 
-    if (rc != NGX_OK && rc != NGX_DECLINED) {
+    if (rc != NGX_OK) {
         if (rc == NGX_ERROR || rc == NGX_HTTP_UPSTREAM_INVALID_HEADER) {
             return rc;
         }
@@ -317,10 +317,10 @@ ngx_http_proxy_filter_body_hook(ngx_http_request_t *r, ngx_chain_t **body)
     ngx_memzero(&ctx, sizeof(ngx_http_proxy_filter_ctx_t));
     ctx.body = body;
 
-    rc = ngx_http_proxy_filter_call_phase(r, NGX_HTTP_PROXY_BODY_FILTER,
-                                         &ctx, NULL);
+    rc = ngx_http_proxy_filter_run_phase(r, NGX_HTTP_PROXY_BODY_FILTER,
+                                        &ctx, NULL);
 
-    if (rc == NGX_OK || rc == NGX_DECLINED) {
+    if (rc == NGX_OK) {
         return NGX_OK;
     }
 
@@ -381,7 +381,7 @@ ngx_http_proxy_filter_finalize_hook(ngx_http_request_t *r, ngx_int_t rc)
 
     phase = NGX_HTTP_PROXY_FINALIZE_REQUEST_FILTER;
 
-    (void) ngx_http_proxy_filter_call_phase(r, phase, &ctx, NULL);
+    (void) ngx_http_proxy_filter_run_phase(r, phase, &ctx, NULL);
 }
 
 
