@@ -168,7 +168,7 @@ ngx_http_proxy_filter_access_hook(ngx_http_request_t *r)
     ngx_memzero(&ctx, sizeof(ngx_http_proxy_filter_ctx_t));
 
     rc = ngx_http_proxy_filter_run_phase(r, NGX_HTTP_PROXY_ACCESS_FILTER,
-                                        &ctx, NULL);
+                                         &ctx, NULL);
 
     return rc;
 }
@@ -184,7 +184,7 @@ ngx_http_proxy_filter_request_hook(ngx_http_request_t *r, ngx_list_t *headers)
     ctx.headers = headers;
 
     rc = ngx_http_proxy_filter_run_phase(r, NGX_HTTP_PROXY_REQUEST_FILTER,
-                                        &ctx, NULL);
+                                         &ctx, NULL);
 
     if (rc == NGX_OK) {
         return NGX_OK;
@@ -212,10 +212,10 @@ ngx_http_proxy_filter_header_hook(ngx_http_request_t *r)
     ctx.headers_in = &u->headers_in;
 
     rc = ngx_http_proxy_filter_run_phase(r, NGX_HTTP_PROXY_HEADER_FILTER,
-                                        &ctx, NULL);
+                                         &ctx, NULL);
 
     if (rc != NGX_OK) {
-        if (rc == NGX_ERROR || rc == NGX_HTTP_UPSTREAM_INVALID_HEADER) {
+        if (rc == NGX_ERROR) {
             return rc;
         }
 
@@ -312,7 +312,7 @@ ngx_http_proxy_filter_body_hook(ngx_http_request_t *r, ngx_chain_t **body)
     ctx.body = body;
 
     rc = ngx_http_proxy_filter_run_phase(r, NGX_HTTP_PROXY_BODY_FILTER,
-                                        &ctx, NULL);
+                                         &ctx, NULL);
 
     if (rc == NGX_OK) {
         return NGX_OK;
@@ -348,7 +348,7 @@ ngx_http_proxy_filter_event_pipe_body_hook(ngx_http_request_t *r,
 void
 ngx_http_proxy_filter_finalize_hook(ngx_http_request_t *r, ngx_int_t rc)
 {
-    ngx_uint_t                         phase;
+    ngx_uint_t                           phase;
     ngx_http_proxy_filter_ctx_t          ctx;
     ngx_http_proxy_filter_request_ctx_t *rctx;
 
