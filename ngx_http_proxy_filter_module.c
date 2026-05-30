@@ -207,12 +207,6 @@ ngx_http_proxy_filter_header_hook(ngx_http_request_t *r)
         return NGX_ERROR;
     }
 
-#if (NGX_HTTP_CACHE)
-    if (r->cached) {
-        return NGX_OK;
-    }
-#endif
-
     ngx_memzero(&ctx, sizeof(ngx_http_proxy_filter_ctx_t));
     ctx.headers = &u->headers_in.headers;
     ctx.headers_in = &u->headers_in;
