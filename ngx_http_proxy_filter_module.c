@@ -11,11 +11,6 @@
 
 
 typedef struct {
-    ngx_array_t             phases[NGX_HTTP_PROXY_FINALIZE_REQUEST_FILTER + 1];
-} ngx_http_proxy_filter_main_conf_t;
-
-
-typedef struct {
     unsigned                finalized:1;
 } ngx_http_proxy_filter_request_ctx_t;
 
@@ -80,34 +75,6 @@ ngx_http_proxy_filter_create_main_conf(ngx_conf_t *cf)
     }
 
     return conf;
-}
-
-
-ngx_int_t
-ngx_http_proxy_filter_register(ngx_conf_t *cf, ngx_uint_t phase,
-    ngx_http_proxy_filter_pt handler)
-{
-    ngx_http_proxy_filter_pt          *h;
-    ngx_http_proxy_filter_main_conf_t *pmcf;
-
-    if (phase > NGX_HTTP_PROXY_FINALIZE_REQUEST_FILTER || handler == NULL) {
-        return NGX_ERROR;
-    }
-
-    pmcf = ngx_http_conf_get_module_main_conf(cf,
-                                              ngx_http_proxy_filter_module);
-    if (pmcf == NULL) {
-        return NGX_ERROR;
-    }
-
-    h = ngx_array_push(&pmcf->phases[phase]);
-    if (h == NULL) {
-        return NGX_ERROR;
-    }
-
-    *h = handler;
-
-    return NGX_OK;
 }
 
 

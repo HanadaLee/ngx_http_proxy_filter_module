@@ -1,10 +1,10 @@
 # ngx_http_proxy_filter_module
 
-`ngx_http_proxy_filter_module` is an nginx C module that provides a hook-based filter framework for proxy requests. It allows third-party modules to register custom handlers at various phases of the upstream proxy lifecycle.
+`ngx_http_proxy_filter_module` is an nginx C module that provides a hook-based filter framework for proxy requests. It allows third-party modules to attach custom handlers at various phases of the upstream proxy lifecycle.
 
 ## Features
 
-- **Multi-Phase Filtering**: Register handlers at distinct stages of the proxy request lifecycle:
+- **Multi-Phase Filtering**: Attach handlers at distinct stages of the proxy request lifecycle:
   - **Access Filter** — Execute access control checks before forwarding the request.
   - **Request Filter** — Inspect or modify upstream request headers.
   - **Header Filter** — Inspect or modify upstream response headers.
@@ -43,18 +43,10 @@ Include the header file:
 #include <ngx_http_proxy_filter_module.h>
 ```
 
-### Register a Handler
+### Attach a Handler
 
-```c
-ngx_int_t ngx_http_proxy_filter_register(ngx_conf_t *cf, ngx_uint_t phase,
-    ngx_http_proxy_filter_pt handler);
-```
-
-| Parameter | Description |
-|-----------|-------------|
-| `cf` | nginx configuration pointer. |
-| `phase` | One of the `ngx_http_proxy_filter_phase_e` values. |
-| `handler` | Your callback function. |
+Like nginx request phases, handlers are appended by pushing into the proxy
+filter main conf phase array during `postconfiguration`.
 
 ### Filter Phases
 
@@ -117,8 +109,23 @@ static ngx_int_t my_header_filter(ngx_http_request_t *r,
 
 static ngx_int_t my_module_init(ngx_conf_t *cf)
 {
-    return ngx_http_proxy_filter_register(cf, NGX_HTTP_PROXY_HEADER_FILTER,
-                                          my_header_filter);
+    ngx_http_proxy_filter_pt          *h;
+    ngx_http_proxy_filter_main_conf_t *pmcf;
+
+    pmcf = ngx_http_conf_get_module_main_conf(cf,
+                                              ngx_http_proxy_filter_module);
+    if (pmcf == NULL) {
+        return NGX_ERROR;
+    }
+
+    h = ngx_array_push(&pmcf->phases[NGX_HTTP_PROXY_HEADER_FILTER]);
+    if (h == NULL) {
+        return NGX_ERROR;
+    }
+
+    *h = my_header_filter;
+
+    return NGX_OK;
 }
 ```
 

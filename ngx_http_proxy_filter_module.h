@@ -18,6 +18,11 @@
 #endif
 
 
+typedef struct {
+    ngx_array_t             phases[NGX_HTTP_PROXY_FINALIZE_REQUEST_FILTER + 1];
+} ngx_http_proxy_filter_main_conf_t;
+
+
 typedef enum {
     NGX_HTTP_PROXY_ACCESS_FILTER = 0,
     NGX_HTTP_PROXY_REQUEST_FILTER,
