@@ -11,12 +11,12 @@
 
 
 typedef struct {
-    ngx_array_t                      phases[NGX_HTTP_PROXY_FINALIZE_REQUEST_FILTER + 1];
+    ngx_array_t             phases[NGX_HTTP_PROXY_FINALIZE_REQUEST_FILTER + 1];
 } ngx_http_proxy_filter_main_conf_t;
 
 
 typedef struct {
-    unsigned                         finalized:1;
+    unsigned                finalized:1;
 } ngx_http_proxy_filter_request_ctx_t;
 
 
