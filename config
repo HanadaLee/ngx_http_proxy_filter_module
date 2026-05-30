@@ -1,0 +1,44 @@
+ngx_addon_name=ngx_http_proxy_filter_module
+
+if [ "$HTTP" = NO ]; then
+    echo "$0: error: ngx_http_proxy_filter_module requires HTTP"
+    exit 1
+fi
+
+if [ "$HTTP_PROXY" != YES ]; then
+    echo "$0: error: ngx_http_proxy_filter_module requires HTTP proxy"
+    exit 1
+fi
+
+if [ "$ngx_module_link" = DYNAMIC ]; then
+    echo "$0: error: ngx_http_proxy_filter_module must be built with --add-module"
+    exit 1
+fi
+
+have=NGX_HTTP_PROXY_FILTER . auto/have
+
+PROXY_FILTER_INCS="$ngx_addon_dir"
+
+PROXY_FILTER_SRCS="                                                          \
+                $ngx_addon_dir/ngx_http_proxy_filter_module.c                \
+                "
+
+PROXY_FILTER_DEPS="                                                          \
+                $ngx_addon_dir/ngx_http_proxy_filter_module.h                \
+                "
+
+if test -n "$ngx_module_link"; then
+    ngx_module_type=HTTP
+    ngx_module_name="$ngx_addon_name"
+    ngx_module_incs="$PROXY_FILTER_INCS"
+    ngx_module_deps="$PROXY_FILTER_DEPS"
+    ngx_module_srcs="$PROXY_FILTER_SRCS"
+    ngx_module_libs=
+
+    . auto/module
+else
+    HTTP_MODULES="$HTTP_MODULES $ngx_addon_name"
+    HTTP_INCS="$HTTP_INCS $PROXY_FILTER_INCS"
+    NGX_ADDON_SRCS="$NGX_ADDON_SRCS $PROXY_FILTER_SRCS"
+    NGX_ADDON_DEPS="$NGX_ADDON_DEPS $PROXY_FILTER_DEPS"
+fi
