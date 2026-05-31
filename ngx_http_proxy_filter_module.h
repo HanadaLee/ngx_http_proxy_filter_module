@@ -18,11 +18,6 @@
 #endif
 
 
-typedef struct {
-    ngx_array_t             phases[NGX_HTTP_PROXY_FINALIZE_REQUEST_FILTER + 1];
-} ngx_http_proxy_filter_main_conf_t;
-
-
 typedef enum {
     NGX_HTTP_PROXY_ACCESS_FILTER = 0,
     NGX_HTTP_PROXY_REQUEST_FILTER,
@@ -33,16 +28,22 @@ typedef enum {
 
 
 typedef struct {
-    ngx_uint_t                       phase;
+    ngx_array_t             phases[NGX_HTTP_PROXY_FINALIZE_REQUEST_FILTER + 1];
+} ngx_http_proxy_filter_main_conf_t;
 
-    ngx_list_t                      *headers;
+
+typedef struct {
+    ngx_uint_t              phase;
+
+    ngx_list_t             *headers;
+
     ngx_http_upstream_headers_in_t  *headers_in;
 
-    ngx_chain_t                    **body;
+    ngx_chain_t           **body;
 
-    ngx_int_t                        rc;
+    ngx_int_t               rc;
 
-    unsigned                         refresh_headers:1;
+    unsigned                refresh_headers:1;
 } ngx_http_proxy_filter_ctx_t;
 
 
