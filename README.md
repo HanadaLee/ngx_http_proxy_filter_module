@@ -76,7 +76,6 @@ The `ctx` structure provides context for the current phase:
 | `headers_in` | Header | Pointer to `ngx_http_upstream_headers_in_t`. |
 | `body` | Body | Pointer to the response body chain. |
 | `rc` | Finalize | The finalization status code. |
-| `refresh_headers` | Header | Set to `1` to trigger header re-parsing after modification. |
 
 ### Handler Return Value Semantics
 

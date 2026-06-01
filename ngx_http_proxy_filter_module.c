@@ -18,7 +18,6 @@ typedef struct {
 static void *ngx_http_proxy_filter_create_main_conf(ngx_conf_t *cf);
 static ngx_int_t ngx_http_proxy_filter_run_phase(ngx_http_request_t *r,
     ngx_uint_t phase, ngx_http_proxy_filter_ctx_t *ctx, ngx_uint_t *ran);
-static ngx_int_t ngx_http_proxy_filter_refresh_headers(ngx_http_request_t *r);
 static ngx_int_t ngx_http_proxy_filter_has_shadow(ngx_chain_t *cl,
     ngx_buf_t *raw);
 
@@ -187,82 +186,6 @@ ngx_http_proxy_filter_header_hook(ngx_http_request_t *r)
         }
 
         return NGX_HTTP_UPSTREAM_INVALID_HEADER;
-    }
-
-    if (ctx.refresh_headers) {
-        return ngx_http_proxy_filter_refresh_headers(r);
-    }
-
-    return NGX_OK;
-}
-
-
-static ngx_int_t
-ngx_http_proxy_filter_refresh_headers(ngx_http_request_t *r)
-{
-    ngx_int_t                       rc;
-    ngx_str_t                       status_line;
-    ngx_uint_t                      i, status_n;
-    ngx_list_t                      headers, trailers;
-    ngx_list_part_t                *part;
-    ngx_table_elt_t                *h;
-    ngx_http_upstream_t            *u;
-    ngx_http_upstream_header_t     *hh;
-    ngx_http_upstream_main_conf_t  *umcf;
-
-    u = r->upstream;
-
-    if (u == NULL) {
-        return NGX_ERROR;
-    }
-
-    headers = u->headers_in.headers;
-    trailers = u->headers_in.trailers;
-    status_n = u->headers_in.status_n;
-    status_line = u->headers_in.status_line;
-
-    ngx_memzero(&u->headers_in, sizeof(ngx_http_upstream_headers_in_t));
-
-    u->headers_in.headers = headers;
-    u->headers_in.trailers = trailers;
-    u->headers_in.status_n = status_n;
-    u->headers_in.status_line = status_line;
-    u->headers_in.content_length_n = -1;
-    u->headers_in.last_modified_time = -1;
-
-    umcf = ngx_http_get_module_main_conf(r, ngx_http_upstream_module);
-
-    part = &u->headers_in.headers.part;
-    h = part->elts;
-
-    for (i = 0; /* void */; i++) {
-
-        if (i >= part->nelts) {
-            if (part->next == NULL) {
-                break;
-            }
-
-            part = part->next;
-            h = part->elts;
-            i = 0;
-        }
-
-        if (h[i].hash == 0) {
-            continue;
-        }
-
-        h[i].next = NULL;
-
-        hh = ngx_hash_find(&umcf->headers_in_hash, h[i].hash,
-                           h[i].lowcase_key, h[i].key.len);
-
-        if (hh) {
-            rc = hh->handler(r, &h[i], hh->offset);
-
-            if (rc != NGX_OK) {
-                return rc;
-            }
-        }
     }
 
     return NGX_OK;

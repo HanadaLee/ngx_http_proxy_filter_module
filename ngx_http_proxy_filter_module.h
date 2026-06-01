@@ -43,7 +43,6 @@ typedef struct {
 
     ngx_int_t               rc;
 
-    unsigned                refresh_headers:1;
 } ngx_http_proxy_filter_ctx_t;
 
 
