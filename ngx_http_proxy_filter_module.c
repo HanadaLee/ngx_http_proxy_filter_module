@@ -141,13 +141,87 @@ ngx_http_proxy_filter_access_hook(ngx_http_request_t *r)
 
 
 ngx_int_t
-ngx_http_proxy_filter_request_hook(ngx_http_request_t *r, ngx_list_t *headers)
+ngx_http_proxy_filter_get_uri(ngx_http_request_t *r,
+    ngx_http_proxy_filter_ctx_t *ctx, ngx_str_t **uri)
+{
+    ngx_http_upstream_t  *u;
+
+    if (ctx == NULL || uri == NULL
+        || ctx->phase == NGX_HTTP_PROXY_ACCESS_FILTER)
+    {
+        return NGX_ERROR;
+    }
+
+    u = r->upstream;
+
+    if (u == NULL) {
+        return NGX_ERROR;
+    }
+
+    /* already set */
+    if (u->uri.data != NULL) {
+        *uri = &u->uri;
+        return NGX_OK;
+    }
+
+    if (ctx->uri_len == 0 || ctx->uri_handler == NULL) {
+        return NGX_ERROR;
+    }
+
+    u->uri.data = ngx_pnalloc(r->pool, ctx->uri_len);
+    if (u->uri.data == NULL) {
+        return NGX_ERROR;
+    }
+
+
+    if (ctx->uri_handler(r, &u->uri) != NGX_OK) {
+        ngx_str_null(&u->uri);
+        return NGX_ERROR;
+    }
+
+    *uri = &u->uri;
+
+    return NGX_OK;
+}
+
+
+ngx_int_t
+ngx_http_proxy_filter_set_uri(ngx_http_request_t *r,
+    ngx_http_proxy_filter_ctx_t *ctx, ngx_str_t *uri)
+{
+    ngx_http_upstream_t  *u;
+
+    if (ctx == NULL || uri == NULL || uri->len == 0 || uri->data == NULL
+        || ctx->phase != NGX_HTTP_PROXY_REQUEST_FILTER)
+    {
+        ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
+                      "proxy filter: invalid uri");
+        return NGX_ERROR;
+    }
+
+    u = r->upstream;
+
+    if (u == NULL) {
+        return NGX_ERROR;
+    }
+
+    u->uri = *uri;
+
+    return NGX_OK;
+}
+
+
+ngx_int_t
+ngx_http_proxy_filter_request_hook(ngx_http_request_t *r, ngx_list_t *headers,
+    size_t uri_len, ngx_http_proxy_filter_uri_pt uri_handler)
 {
     ngx_int_t                    rc;
     ngx_http_proxy_filter_ctx_t  ctx;
 
     ngx_memzero(&ctx, sizeof(ngx_http_proxy_filter_ctx_t));
     ctx.headers = headers;
+    ctx.uri_len = uri_len;
+    ctx.uri_handler = uri_handler;
 
     rc = ngx_http_proxy_filter_run_phase(r, NGX_HTTP_PROXY_REQUEST_FILTER,
                                          &ctx, NULL);
