@@ -255,7 +255,8 @@ ngx_http_proxy_filter_set_method(ngx_http_request_t *r,
         return NGX_ERROR;
     }
 
-    /* TODO: set method */
+    u->method = *method;
+    ctx->method_set = 1;
 
     return NGX_OK;
 }
@@ -263,7 +264,8 @@ ngx_http_proxy_filter_set_method(ngx_http_request_t *r,
 
 ngx_int_t
 ngx_http_proxy_filter_request_hook(ngx_http_request_t *r, ngx_list_t *headers,
-    size_t uri_len, ngx_http_proxy_filter_uri_pt uri_handler)
+    size_t uri_len, ngx_http_proxy_filter_uri_pt uri_handler,
+    ngx_uint_t *method_set)
 {
     ngx_int_t                    rc;
     ngx_http_proxy_filter_ctx_t  ctx;
@@ -275,6 +277,10 @@ ngx_http_proxy_filter_request_hook(ngx_http_request_t *r, ngx_list_t *headers,
 
     rc = ngx_http_proxy_filter_run_phase(r, NGX_HTTP_PROXY_REQUEST_FILTER,
                                          &ctx, NULL);
+
+    if (method_set) {
+        *method_set = ctx.method_set;
+    }
 
     if (rc == NGX_OK) {
         return NGX_OK;

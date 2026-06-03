@@ -45,6 +45,8 @@ typedef struct {
 
     ngx_http_proxy_filter_uri_pt     uri_handler;
 
+    ngx_uint_t              method_set;
+
     ngx_http_upstream_headers_in_t  *headers_in;
 
     ngx_chain_t           **body;
@@ -75,7 +77,7 @@ ngx_int_t ngx_http_proxy_filter_set_uri(ngx_http_request_t *r,
 ngx_int_t ngx_http_proxy_filter_access_hook(ngx_http_request_t *r);
 ngx_int_t ngx_http_proxy_filter_request_hook(ngx_http_request_t *r,
     ngx_list_t *headers, size_t uri_len,
-    ngx_http_proxy_filter_uri_pt uri_handler);
+    ngx_http_proxy_filter_uri_pt uri_handler, ngx_uint_t *method_set);
 ngx_int_t ngx_http_proxy_filter_header_hook(ngx_http_request_t *r);
 ngx_int_t ngx_http_proxy_filter_body_hook(ngx_http_request_t *r,
     ngx_chain_t **body);
