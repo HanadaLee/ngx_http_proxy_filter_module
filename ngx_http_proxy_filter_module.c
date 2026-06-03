@@ -212,6 +212,56 @@ ngx_http_proxy_filter_set_uri(ngx_http_request_t *r,
 
 
 ngx_int_t
+ngx_http_proxy_filter_get_method(ngx_http_request_t *r,
+    ngx_http_proxy_filter_ctx_t *ctx, ngx_str_t **method)
+{
+    ngx_http_upstream_t  *u;
+
+    if (ctx == NULL || method == NULL
+        || ctx->phase == NGX_HTTP_PROXY_ACCESS_FILTER)
+    {
+        return NGX_ERROR;
+    }
+
+    u = r->upstream;
+
+    if (u == NULL) {
+        return NGX_ERROR;
+    }
+
+    *method = &u->method;
+
+    return NGX_OK;
+}
+
+
+ngx_int_t
+ngx_http_proxy_filter_set_method(ngx_http_request_t *r,
+    ngx_http_proxy_filter_ctx_t *ctx, ngx_str_t *method)
+{
+    ngx_http_upstream_t  *u;
+
+    if (ctx == NULL || method == NULL || method->len == 0
+        || method->data == NULL || ctx->phase != NGX_HTTP_PROXY_REQUEST_FILTER)
+    {
+        ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
+                      "proxy filter: invalid method");
+        return NGX_ERROR;
+    }
+
+    u = r->upstream;
+
+    if (u == NULL) {
+        return NGX_ERROR;
+    }
+
+    /* TODO: set method */
+
+    return NGX_OK;
+}
+
+
+ngx_int_t
 ngx_http_proxy_filter_request_hook(ngx_http_request_t *r, ngx_list_t *headers,
     size_t uri_len, ngx_http_proxy_filter_uri_pt uri_handler)
 {

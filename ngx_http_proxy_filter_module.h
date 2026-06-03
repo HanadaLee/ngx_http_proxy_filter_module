@@ -66,6 +66,10 @@ typedef ngx_int_t (*ngx_http_proxy_filter_pt)(ngx_http_request_t *r,
 ngx_int_t ngx_http_proxy_filter_register(ngx_conf_t *cf, ngx_uint_t phase,
     ngx_http_proxy_filter_pt handler);
 
+ngx_int_t ngx_http_proxy_filter_get_method(ngx_http_request_t *r,
+    ngx_http_proxy_filter_ctx_t *ctx, ngx_str_t **method);
+ngx_int_t ngx_http_proxy_filter_set_method(ngx_http_request_t *r,
+    ngx_http_proxy_filter_ctx_t *ctx, ngx_str_t *method);
 ngx_int_t ngx_http_proxy_filter_get_uri(ngx_http_request_t *r,
     ngx_http_proxy_filter_ctx_t *ctx, ngx_str_t **uri);
 ngx_int_t ngx_http_proxy_filter_set_uri(ngx_http_request_t *r,
