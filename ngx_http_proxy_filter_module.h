@@ -69,6 +69,8 @@ ngx_int_t ngx_http_proxy_filter_get_method(ngx_http_request_t *r,
     ngx_http_proxy_filter_ctx_t *ctx, ngx_str_t **method);
 ngx_int_t ngx_http_proxy_filter_set_method(ngx_http_request_t *r,
     ngx_http_proxy_filter_ctx_t *ctx, ngx_str_t *method);
+ngx_int_t ngx_http_proxy_filter_get_host(ngx_http_request_t *r,
+    ngx_http_proxy_filter_ctx_t *ctx, ngx_str_t **host);
 ngx_int_t ngx_http_proxy_filter_get_uri(ngx_http_request_t *r,
     ngx_http_proxy_filter_ctx_t *ctx, ngx_str_t **uri);
 ngx_int_t ngx_http_proxy_filter_set_uri(ngx_http_request_t *r,
