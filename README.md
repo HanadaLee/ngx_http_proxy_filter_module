@@ -15,8 +15,6 @@
 
 - **Chain-Aware Body Processing**: Safe handling of nginx buffer chains and shadow buffers during body filtering.
 
-- **Header Refresh Support**: Allows response headers to be dynamically refreshed and re-parsed by nginx after modification.
-
 ## Requirements
 
 - nginx with **HTTP proxy module** enabled.
