@@ -18,7 +18,7 @@ use Test::Nginx qw/ :DEFAULT http_content /;
 select STDERR; $| = 1;
 select STDOUT; $| = 1;
 
-my $t = Test::Nginx->new()->has(qw/http proxy rewrite ngx_condition_module
+my $t = Test::Nginx->new()->has(qw/http proxy rewrite ngx_expr_module
 	ngx_http_proxy_filter_module/)
 	->plan(13);
 
@@ -51,7 +51,7 @@ http {
         listen       127.0.0.1:8080;
         server_name  localhost;
 
-        condition use_http_11 str_eq $arg_mode http11;
+        expr use_http_11 str_eq $arg_mode http11;
 
         location = /basic {
             proxy_filter_test on;

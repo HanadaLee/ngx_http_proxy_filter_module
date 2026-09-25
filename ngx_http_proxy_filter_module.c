@@ -10,8 +10,8 @@
 #include <ngx_http_proxy_filter_module.h>
 #include <ngx_http_proxy_module.h>
 
-#if (NGX_RESTY_EXT && NGX_CONDITION)
-#include <ngx_http_condition_module.h>
+#if (NGX_RESTY_EXT && NGX_EXPR)
+#include <ngx_http_expr_module.h>
 #endif
 
 
@@ -282,7 +282,7 @@ ngx_http_proxy_filter_get_host(ngx_http_request_t *r,
         ngx_str_t                 *value;
         ngx_http_proxy_ctx_t      *pctx;
         ngx_http_proxy_loc_conf_t *plcf;
-#if (NGX_RESTY_EXT && NGX_CONDITION)
+#if (NGX_RESTY_EXT && NGX_EXPR)
         ngx_uint_t                 version;
 #endif
 
@@ -293,8 +293,8 @@ ngx_http_proxy_filter_get_host(ngx_http_request_t *r,
             return NGX_ERROR;
         }
 
-#if (NGX_RESTY_EXT && NGX_CONDITION)
-        version = ngx_http_get_conditional_enum_value(r, plcf->http_version);
+#if (NGX_RESTY_EXT && NGX_EXPR)
+        version = ngx_http_get_expr_enum_value(r, plcf->http_version);
 #endif
 
         value = ngx_pnalloc(r->pool, sizeof(ngx_str_t));
@@ -312,7 +312,7 @@ ngx_http_proxy_filter_get_host(ngx_http_request_t *r,
         }
 
         if (plcf->host_value == NULL
-#if (NGX_RESTY_EXT && NGX_CONDITION)
+#if (NGX_RESTY_EXT && NGX_EXPR)
             || (value->len == 0 && version == NGX_HTTP_VERSION_11))
 #else
             || (value->len == 0 && plcf->http_version == NGX_HTTP_VERSION_11))
