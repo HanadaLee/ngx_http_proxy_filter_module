@@ -1,0 +1,57 @@
+name: Test
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      nginx_ref:
+        description: nginx-ext branch, tag or commit
+        default: '1.31.7'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    if: github.repository == 'HanadaLee/ngx_http_proxy_filter_module'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Check out module
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Check out nginx-ext
+        uses: actions/checkout@v6
+        with:
+          repository: HanadaLee/nginx-ext
+          ref: ${{ inputs.nginx_ref || '1.31.7' }}
+          path: .ci/nginx
+          persist-credentials: false
+
+      - name: Check out ngx_expr_module
+        uses: actions/checkout@v6
+        with:
+          repository: HanadaLee/ngx_expr_module
+          path: .ci/ngx_expr_module
+          persist-credentials: false
+
+      - name: Check out nginx-tests
+        uses: actions/checkout@v6
+        with:
+          repository: nginx/nginx-tests
+          path: .ci/nginx-tests
+          persist-credentials: false
+
+      - name: Install test build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            build-essential libpcre2-dev libssl-dev zlib1g-dev perl
+
+      - name: Build and test
+        run: bash util/run-tests.sh .ci/nginx .ci/nginx-tests .ci/ngx_expr_module
