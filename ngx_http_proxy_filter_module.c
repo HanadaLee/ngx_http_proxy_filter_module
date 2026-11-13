@@ -10,10 +10,6 @@
 #include <ngx_http_proxy_filter_module.h>
 #include <ngx_http_proxy_module.h>
 
-#if (NGX_RESTY_EXT && NGX_EXPR)
-#include <ngx_http_expr_module.h>
-#endif
-
 
 typedef struct {
     unsigned                finalized:1;
@@ -271,106 +267,22 @@ ngx_int_t
 ngx_http_proxy_filter_get_host(ngx_http_request_t *r,
     ngx_http_proxy_filter_ctx_t *ctx, ngx_str_t **host)
 {
+    ngx_http_proxy_ctx_t  *pctx;
+
     if (ctx == NULL || host == NULL
         || ctx->phase != NGX_HTTP_PROXY_REQUEST_FILTER)
     {
         return NGX_ERROR;
     }
 
-#if (nginx_version >= 1031004 || NGX_RESTY_EXT_1_31_4_BACKPORT)
-    {
-        ngx_str_t                 *value;
-        ngx_http_proxy_ctx_t      *pctx;
-        ngx_http_proxy_loc_conf_t *plcf;
-#if (NGX_RESTY_EXT && NGX_EXPR)
-        ngx_uint_t                 version;
-#endif
-
-        pctx = ngx_http_get_module_ctx(r, ngx_http_proxy_module);
-        plcf = ngx_http_get_module_loc_conf(r, ngx_http_proxy_module);
-
-        if (pctx == NULL || plcf == NULL) {
-            return NGX_ERROR;
-        }
-
-#if (NGX_RESTY_EXT && NGX_EXPR)
-        version = ngx_http_get_expr_enum_value(r, plcf->http_version);
-#endif
-
-        value = ngx_pnalloc(r->pool, sizeof(ngx_str_t));
-        if (value == NULL) {
-            return NGX_ERROR;
-        }
-
-        value->len = 0;
-        value->data = NULL;
-
-        if (plcf->host_value
-            && ngx_http_complex_value(r, plcf->host_value, value) != NGX_OK)
-        {
-            return NGX_ERROR;
-        }
-
-        if (plcf->host_value == NULL
-#if (NGX_RESTY_EXT && NGX_EXPR)
-            || (value->len == 0 && version == NGX_HTTP_VERSION_11))
-#else
-            || (value->len == 0 && plcf->http_version == NGX_HTTP_VERSION_11))
-#endif
-        {
-            *value = pctx->vars.host_header;
-        }
-
-        if (value->len == 0) {
-            return NGX_ERROR;
-        }
-
-        *host = value;
-
-        return NGX_OK;
-    }
-#else
-    {
-        ngx_uint_t       i;
-        ngx_list_part_t *part;
-        ngx_table_elt_t *h;
-
-        if (ctx->headers == NULL) {
-            return NGX_ERROR;
-        }
-
-        part = &ctx->headers->part;
-        h = part->elts;
-
-        for (i = 0; /* void */; i++) {
-
-            if (i >= part->nelts) {
-                if (part->next == NULL) {
-                    break;
-                }
-
-                part = part->next;
-                h = part->elts;
-                i = 0;
-            }
-
-            if (h[i].hash == 0) {
-                continue;
-            }
-
-            if (h[i].key.len == sizeof("Host") - 1
-                && ngx_strncasecmp(h[i].key.data, (u_char *) "Host",
-                                   sizeof("Host") - 1)
-                   == 0)
-            {
-                *host = &h[i].value;
-                return NGX_OK;
-            }
-        }
-
+    pctx = ngx_http_get_module_ctx(r, ngx_http_proxy_module);
+    if (pctx == NULL || pctx->filter_host.len == 0) {
         return NGX_ERROR;
     }
-#endif
+
+    *host = &pctx->filter_host;
+
+    return NGX_OK;
 }
 
 

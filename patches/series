@@ -1,0 +1,2 @@
+NGX_MODULE_API_VERSION src/core/ngx_module.h nginx-module-api-1.31.8+.patch 4
+NGX_HTTP_PROXY_FILTER_CORE src/http/modules/ngx_http_proxy_module.h nginx-1.31.8+.patch 1 nginx-request-builder-1.31.8+.patch

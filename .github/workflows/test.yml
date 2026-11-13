@@ -6,8 +6,8 @@ on:
   workflow_dispatch:
     inputs:
       nginx_ref:
-        description: nginx-ext branch, tag or commit
-        default: '1.31.7'
+        description: nginx branch, tag or commit
+        default: 'release-1.31.8'
         required: true
         type: string
 
@@ -19,21 +19,26 @@ jobs:
     if: github.repository == 'HanadaLee/ngx_http_proxy_filter_module'
     runs-on: ubuntu-24.04
     timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        expr: [enabled, disabled]
     steps:
       - name: Check out module
         uses: actions/checkout@v6
         with:
           persist-credentials: false
 
-      - name: Check out nginx-ext
+      - name: Check out nginx
         uses: actions/checkout@v6
         with:
-          repository: HanadaLee/nginx-ext
-          ref: ${{ inputs.nginx_ref || '1.31.7' }}
+          repository: nginx/nginx
+          ref: ${{ inputs.nginx_ref || 'release-1.31.8' }}
           path: .ci/nginx
           persist-credentials: false
 
       - name: Check out ngx_expr_module
+        if: matrix.expr == 'enabled'
         uses: actions/checkout@v6
         with:
           repository: HanadaLee/ngx_expr_module
@@ -54,4 +59,6 @@ jobs:
             build-essential libpcre2-dev libssl-dev zlib1g-dev perl
 
       - name: Build and test
+        env:
+          TEST_EXPR: ${{ matrix.expr }}
         run: bash util/run-tests.sh .ci/nginx .ci/nginx-tests .ci/ngx_expr_module

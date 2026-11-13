@@ -18,14 +18,16 @@
 ## Requirements
 
 - nginx with **HTTP proxy module** enabled.
-- **OpenResty / NGX_RESTY_EXT**: This module requires the `NGX_RESTY_EXT` macro to be defined.
+- nginx 1.31.8 with the bundled core patch applied.
 - Must be compiled as a **static module** (`--add-module`), dynamic module (`--add-dynamic-module`) is not supported.
 
 ## Installation
 
-Compile nginx or OpenResty with this module:
+The application script selects the patch matching the request builder. Apply it before compiling the module:
 
 ```bash
+bash /path/to/ngx_http_proxy_filter_module/util/apply-nginx-patches.sh /path/to/nginx
+cd /path/to/nginx
 ./configure \
     --add-module=/path/to/ngx_http_proxy_filter_module \
     ...

@@ -11,10 +11,11 @@
 #include <ngx_config.h>
 #include <ngx_core.h>
 #include <ngx_http.h>
+#include <ngx_http_proxy_module.h>
 
 
-#if !defined(NGX_RESTY_EXT) || !(NGX_RESTY_EXT)
-#error "ngx_http_proxy_filter_module requires NGX_RESTY_EXT"
+#if !(NGX_HTTP_PROXY_FILTER_CORE)
+#error "ngx_http_proxy_filter_module requires its nginx core patch"
 #endif
 
 
