@@ -13,6 +13,10 @@ configure_args=(
     --with-http_v2_module
 )
 
+if [[ "${TEST_CORE:-nginx}" == without-ext ]]; then
+    configure_args+=(--without-ext)
+fi
+
 export TEST_NGINX_EXPR=0
 if [[ "${TEST_EXPR:-disabled}" == enabled ]]; then
     expr_source="$(cd "${3:?ngx_expr_module checkout is required}" && pwd)"
@@ -29,7 +33,10 @@ configure=./configure
 sh "$configure" "${configure_args[@]}"
 make -j"${TEST_BUILD_JOBS:-$(getconf _NPROCESSORS_ONLN)}"
 
-export TEST_NGINX_UPSTREAM_EXPR="${TEST_NGINX_UPSTREAM_EXPR:-0}"
+export TEST_NGINX_UPSTREAM_EXPR=0
+if [[ "$TEST_NGINX_EXPR" == 1 ]] && grep -q '^#define NGX_EXT  *1$' objs/ngx_auto_config.h; then
+    export TEST_NGINX_UPSTREAM_EXPR=1
+fi
 
 export TEST_NGINX_BINARY="$nginx_source/objs/nginx"
 export PERL5LIB="$nginx_tests/lib"

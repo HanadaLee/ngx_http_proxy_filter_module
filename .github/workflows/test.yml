@@ -23,6 +23,7 @@ jobs:
       fail-fast: false
       matrix:
         expr: [enabled, disabled]
+        core: [nginx, nginx-ext, without-ext]
     steps:
       - name: Check out module
         uses: actions/checkout@v6
@@ -32,8 +33,8 @@ jobs:
       - name: Check out nginx
         uses: actions/checkout@v6
         with:
-          repository: nginx/nginx
-          ref: ${{ inputs.nginx_ref || 'release-1.31.8' }}
+          repository: ${{ matrix.core == 'nginx' && 'nginx/nginx' || 'HanadaLee/nginx-ext' }}
+          ref: ${{ matrix.core == 'nginx' && (inputs.nginx_ref || 'release-1.31.8') || '1.31.9' }}
           path: .ci/nginx
           persist-credentials: false
 
@@ -60,5 +61,6 @@ jobs:
 
       - name: Build and test
         env:
+          TEST_CORE: ${{ matrix.core }}
           TEST_EXPR: ${{ matrix.expr }}
         run: bash util/run-tests.sh .ci/nginx .ci/nginx-tests .ci/ngx_expr_module
